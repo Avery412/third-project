@@ -1,121 +1,61 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import Header from './components/Header'
+import InputBlock from './components/InputBlock'
+import OutputBlock from './components/OutputBlock'
+import LoadingStatus from './components/LoadingStatus'
+
+// --- Get API key ---
+const API_KEY = import.meta.env.VITE_WEATHER_API_KEY
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const [weather, setWeather] = useState(null) // Weather state
+  const [isLoading, setIsLoading] = useState(false) // Loading state
+  const [error, setError] = useState(null) // Error state
+
+  // --- Gets weather data from the API ---
+  const fetchWeather = async (cityName) => {
+    setIsLoading(true) // loading
+    setError(null) // clear errors
+    
+    try {
+      // Build the API URL
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=metric&lang=ru`
+      
+      // Make the API request
+      const response = await fetch(url)
+    
+      if (!response.ok) {
+        throw new Error('Город не найден.')
+      }
+      
+      // Parse the JSON response
+      const data = await response.json()
+      
+      // Store the weather data
+      setWeather(data)
+    } catch (err) {
+      setError(err.message)
+      setWeather(null)
+    } finally {
+      setIsLoading(false) // hide loading
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    // --- Main container ---
+    <div className="min-h-screen bg-gradient-to-br from-blue-400 to-purple-500 flex flex-col items-center p-4">
+      
+      <Header />
+      
+      <div className="flex flex-col items-center gap-6 mt-6 w-full max-w-md">
+        
+        <InputBlock onSearch={fetchWeather} />
+        <LoadingStatus isLoading={isLoading} error={error} />
+        <OutputBlock weather={weather} />
+        
+      </div>
+    </div>
   )
 }
 
