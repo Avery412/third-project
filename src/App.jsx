@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Header from './components/Header'
 import InputBlock from './components/InputBlock'
 import OutputBlock from './components/OutputBlock'
@@ -12,6 +12,27 @@ function App() {
   const [weather, setWeather] = useState(null) // Weather state
   const [isLoading, setIsLoading] = useState(false) // Loading state
   const [error, setError] = useState(null) // Error state
+
+  // --- Gets weather by geolocation ---
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        // Extract latitude and longitude from the position object
+        const {latitude, longitude} = position.coords
+        
+        // Build the API URL
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric&lang=ru`
+        
+        try {
+          const response = await fetch(url) // Fetch data
+          const data = await response.json() // Parse the JSON response
+          setWeather(data) // Store the weather data
+        } catch (err) {
+          setError('Не удалось получить погоду по геолокации')
+        }
+      },
+    )
+  }, [])
 
   // --- Gets weather data from the API ---
   const fetchWeather = async (cityName) => {
