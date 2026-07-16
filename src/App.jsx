@@ -3,6 +3,7 @@ import Header from './components/Header'
 import InputBlock from './components/InputBlock'
 import OutputBlock from './components/OutputBlock'
 import LoadingStatus from './components/LoadingStatus'
+import CityList from './components/CityList'
 
 // --- Get API key ---
 const API_KEY = import.meta.env.VITE_WEATHER_API_KEY
@@ -12,6 +13,8 @@ function App() {
   const [weather, setWeather] = useState(null) // Weather state
   const [isLoading, setIsLoading] = useState(false) // Loading state
   const [error, setError] = useState(null) // Error state
+  const [cities, setCities] = useState([]) // City list
+  const [selectedCity, setSelectedCity] = useState(null) // Selected city
 
   // --- Gets weather by geolocation ---
   useEffect(() => {
@@ -26,13 +29,51 @@ function App() {
         try {
           const response = await fetch(url) // Fetch data
           const data = await response.json() // Parse the JSON response
-          setWeather(data) // Store the weather data
+          
+          // Create city object
+          const newCity = {
+            id: Date.now(),
+            name: data.name,
+            country: data.sys.country,
+            weather: data,
+          }
+
+          addCity(newCity)
+          setWeather(data)
+          setSelectedCity(newCity)
+
         } catch (err) {
           setError('Не удалось получить погоду по геолокации')
         }
       },
     )
   }, [])
+
+  // --- Adds new city ---
+  const addCity = (cityData) => {
+    // Check city existence
+    if (cities.some(c => c.name === cityData.name)) {
+      alert('Вы уже добавили этот город')
+      return
+    }
+    setCities([...cities, cityData])
+  }
+
+  // --- Selects city ---
+  const selectCity = (city) => {
+    setSelectedCity(city)
+    setWeather(city.weather)
+  }
+
+  // --- Deletes city ---
+  const deleteCity = (id) => {
+    const newCities = cities.filter(c => c.id !== id)
+    setCities(newCities)
+    if (selectedCity?.id === id) {
+      setSelectedCity(newCities[0] || null)
+      setWeather(newCities[0]?.weather || null)
+    }
+  }
 
   // --- Gets weather data from the API ---
   const fetchWeather = async (cityName) => {
@@ -52,9 +93,20 @@ function App() {
       
       // Parse the JSON response
       const data = await response.json()
-      
-      // Store the weather data
+
+      // Create city object
+      const newCity = {
+        id: Date.now(),
+        name: data.name,
+        country: data.sys.country,
+        weather: data,
+      }
+
+      // Add to list and show
+      addCity(newCity) 
       setWeather(data)
+      setSelectedCity(newCity)
+
     } catch (err) {
       setError(err.message)
       setWeather(null)
@@ -65,13 +117,19 @@ function App() {
 
   return (
     // --- Main container ---
-    <div className="min-h-screen bg-gradient-to-br from-blue-400 to-purple-500 flex flex-col items-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-400 to-purple-700 flex flex-col items-center p-4">
       
       <Header />
       
       <div className="flex flex-col items-center gap-6 mt-6 w-full max-w-md">
         
         <InputBlock onSearch={fetchWeather} />
+        <CityList
+          cities={cities}
+          selectedCity={selectedCity}
+          onSelect={selectCity}
+          onDelete={deleteCity}
+        />
         <LoadingStatus isLoading={isLoading} error={error} />
         <OutputBlock weather={weather} />
         
